@@ -1,0 +1,899 @@
+\documentclass[usenames,dvipsnames,mathserif,notheorems]{beamer}
+
+% silence annoying warnings
+\usepackage{silence}
+\usepackage{caption}
+\WarningFilter{remreset}{The remreset package}
+\usepackage{xcolor}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{centernot}
+\usepackage{algorithmic}
+\usepackage{ulem}
+
+\input{macros/math}
+\input{macros/plots}
+
+%% Pause in align environments: https://tex.stackexchange.com/questions/16186
+\makeatletter
+\let\save@measuring@true\measuring@true
+\def\measuring@true{%
+	\save@measuring@true
+	%\def\beamer@sortzero##1{\beamer@ifnextcharospec{\beamer@sortzeroread{##1}}{}}%
+	\def\beamer@sortzeroread##1<##2>{}%
+	\def\beamer@finalnospec{}%
+}
+\makeatother
+
+\pgfdeclarelayer{ft}
+\pgfdeclarelayer{bg}
+\pgfsetlayers{bg,main,ft}
+
+\pgfplotsset{
+	compat=1.5.1,
+	oracle/.style={color=red, style=dashed, line width=1.5pt},
+	bound/.style={color=blue, style=solid, line width=1.5pt},
+	objective/.style={color=black, style=solid, line width=1.5pt},
+}
+
+\usepackage{simplebeam}
+\usetheme{simplebeamer}
+
+\usetikzlibrary{shapes, arrows}
+\usetikzlibrary{decorations.pathreplacing, calligraphy, overlay-beamer-styles}
+
+% node styles
+\tikzstyle{Input}=[minimum size=0.3cm, fill=black, line width = 0.5mm, draw=black, shape=circle, text=black]
+\tikzstyle{Hidden}=[minimum size=0.3cm, fill=blue, line width = 0.5mm, draw=blue, shape=circle, text=blue]
+\tikzstyle{Splits}=[inner sep=0.03cm, minimum size=0.3cm, line width = 0.3mm, draw=blue, shape=circle, text=black]
+\tikzstyle{Output}=[minimum size=0.3cm, fill=white, line width = 0.5mm, draw=black, shape=circle, text=black]
+
+% Edge styles
+\tikzstyle{arrow}=[line width = 0.5mm]
+
+% bib resources
+
+\addbibresource[]{refs.bib}
+
+\title{Level Set Teleportation: an Optimization Perspective}
+\author{Aaron Mishkin \and Alberto Bietti \and Robert M. Gower}
+\collaborators{
+	\includegraphics[width=0.18\linewidth]{assets/flatiron_small.jpeg}
+	\includegraphics[width=0.18\linewidth]{assets/alberto.jpg}
+	\includegraphics[width=0.18\linewidth]{assets/rob.jpg}
+}
+
+\titlegraphic{\includegraphics[width=0.275\textwidth]{assets/CCM.png}\hfill%
+\includegraphics[width=0.4\textwidth]{assets/SUSig_2color_Stree_Left.eps}}
+
+\newcommand{\horizontalrule}{
+	{
+			\vspace{-0.5em}
+			\center \rule{\textwidth}{0.1em}
+			\vspace{-0.2em}
+		}
+}
+
+\definecolor{bad}{HTML}{eb6223}
+\definecolor{good}{HTML}{9434ed}
+
+\newcommand{\bad}[1]{\textcolor{bad}{#1}}
+\newcommand{\good}[1]{\textcolor{good}{#1}}
+\newcommand{\purple}[1]{\textcolor{Magenta}{#1}}
+
+% toggle plotting tikz
+\def\showtikz{}
+
+%\logo{\includegraphics[height=0.5cm]{assets/Block_S_2_color.eps}}
+
+%\institute{Stanford University}
+\date{}
+
+\begin{document}
+
+\maketitle
+%% main content starts %%
+
+\begin{frame}{Introduction: Plateau's and Sudden Drops}
+
+    \textbf{Basic Problem}: deep-learning objectives have many \bad{flat regions}
+    where the gradient is small and optimization is slow \citep{fukumizu2000local}.
+
+    \pause
+
+    \begin{figure}[]
+        \centering
+        \includegraphics[width=0.98\textwidth]{assets/plateau.png}
+    \end{figure}
+
+    \pause
+
+    Flat regions can cause \bad{plateaus} in training loss and then \good{sudden
+        drops} when iterates finally escape.
+
+    \source{https://arxiv.org/abs/1512.03385}
+
+\end{frame}
+
+\begin{frame}{Introduction: Flat Loss Surfaces}
+
+    Faster optimization requires \good{escaping flat regions} quickly.
+
+    \pause
+
+    \begin{figure}[]
+        \centering
+        \includegraphics[width=0.7\textwidth]{assets/loss_surface_plain.png}
+    \end{figure}
+
+    \pause
+
+    \begin{itemize}
+        \item Newton's method could do this, but Newton doesn't work
+              for non-convex objectives due to \bad{negative curvature}.
+    \end{itemize}
+
+    \source{https://www.sciencedirect.com/science/article/abs/pii/S0893608000000095}
+
+\end{frame}
+
+\begin{frame}{Introduction: Towards Teleportation}
+
+    What we really want to do is \good{jump away} to a big gradient!
+
+    \pause
+
+    \begin{figure}[]
+        \centering
+        \includegraphics[width=0.7\textwidth]{assets/loss_surface_teleport.png}
+    \end{figure}
+
+    \pause
+
+    This is the picture  behind \textbf{level set teleportation} \citep{zhao2023symmetry}.
+
+    \source{https://www.sciencedirect.com/science/article/abs/pii/S0893608000000095}
+
+\end{frame}
+
+\begin{frame}{Introduction: Background}
+
+    \textbf{Teleport incipit}:
+    \citet{armenta2020neural, armenta2021representation}
+    propose \good{random jumps} using symmetry operators.
+
+    \pause
+    \vspace{1ex}
+
+    \begin{itemize}
+        \item But it \bad{doesn't work} very well\ldots
+    \end{itemize}
+
+    \pause
+    \horizontalrule
+
+    \textbf{Enter optimization}:
+    \citet{zhao2023improving} \good{optimize} over symmetries and
+    alternate between GD and teleportation steps.
+
+    \pause
+    \vspace{1ex}
+
+    \begin{itemize}
+        \item They use Newton's method to prove a \good{mixed linear/quadratic}
+              rate for strongly-convex functions.
+              \pause
+              \vspace{1ex}
+
+        \item They give standard rates under the PL-condition
+              \citep{karimi2016pl} and slightly \good{stronger guarantees} for
+              non-convex functions.
+              \pause
+              \vspace{1ex}
+
+        \item But, symmetries only \bad{approximate teleportation}\ldots
+
+              \pause
+              \vspace{1ex}
+
+        \item And nothing is known for \bad{non-strongly convex} functions.
+              \pause
+    \end{itemize}
+
+    \vspace{2ex}
+
+\end{frame}
+
+\begin{frame}{Introduction: Contributions}
+    \begin{figure}[]
+        \centering
+        \includegraphics[width=0.9\textwidth]{assets/GD_combined.pdf}
+    \end{figure}
+
+    \textbf{Our Contributions}:
+    \pause
+    \begin{itemize}
+        \item We show teleportation only accelerates optimization when (i)
+              there is \bad{curvature} and (ii) \bad{adaptive step-sizes} are
+              used.
+              \pause
+              \vspace{1ex}
+
+        \item We show teleportation \good{speeds-up} optimization under Hessian
+              stability (rates faster than \( O(1/K) \)!).
+              \pause
+              \vspace{1ex}
+
+        \item We develop a \good{fast, parameter-free} algorithm for solving
+              teleportation problems.
+    \end{itemize}
+
+\end{frame}
+
+\setbeamercolor{background canvas}{bg=LightCyan}
+\begin{frame}{}
+    \begin{center}
+        \huge Optimization Background
+    \end{center}
+\end{frame}
+\setbeamercolor{background canvas}{bg=white}
+
+\begin{frame}{Optimization Setting}
+
+    \textbf{Goal}: minimize an \bad{objective} \( f : \R^d \into \R\),
+    \[
+        \calW^* = \argmin_{w} f(w).
+    \]
+    \pause
+
+    We are willing to make the following assumptions.
+    \vspace{1ex}
+    \pause
+    \begin{itemize}
+        \item \( f \) is \good{convex}, meaning for every \( y, x \in \R^d\),
+              \[
+                  f(y) \geq f(x) + \abr{\grad(x), y - x}.
+              \]
+              \pause
+
+        \item \( f \) is \good{differentiable} and \( \nabla f \) is
+              \good{\( L \)-Lipschitz}: \( \forall x, y \in \R^d \),
+              \[
+                  \norm{\grad(y) - \grad(x)}_2 \leq L \norm{y - x}_2,
+              \]
+              \pause
+
+              \vspace{-2ex}
+              \begin{itemize}
+                  \item \( \grad \) doesn't change \bad{too fast}\ldots
+              \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Lipschitz Gradients: Motivation}
+    \begin{center}
+        \Large
+        Why do we need \( \grad \) to be \( L \)-Lipschitz?
+    \end{center}
+
+    \pause
+    \horizontalrule
+
+    \textbf{Intuition}: gradient magnitude isn't informative for non-smooth \( f \).
+    \[
+        \textbf{GD}: \, \wkk = \wk - \eta \grad(\wk).
+    \]
+    \pause
+
+    \vspace{2ex}
+
+    \begin{center}
+        \input{assets/smoothness}%
+    \end{center}
+
+\end{frame}
+
+\begin{frame}{Lipschitz Gradients: Upper Bounds}
+    If \( \grad \) is L-Lipschitz, then
+    \begin{align*}
+               & \abs{f(y) - f(x) - \abr{\grad(x), y - x}}                                            \\
+        \pause & \hspace{2em} = \abs{\int_0^1 \abr{\grad(x + t(y - x)) - \grad(x), y - x} dt}         \\
+        \pause & \hspace{2em} \leq \int_0^1 \norm{\grad(x + t(y - x)) - \grad(x)}_2 \norm{y - x}_2 dt \\
+        \pause & \hspace{2em} \leq \int_0^1 L t \norm{y - x}_2 \norm{y - x}_2 dt                      \\
+        \pause & \hspace{2em} \leq \frac{L}{2} \norm{y - x}^2_2.
+    \end{align*}
+
+    \pause
+
+    The objective is upper-bounded by a \good{quadratic function}!
+    \[
+        f(y) \leq f(x) + \abr{\grad(x), y - x} + \frac{L}{2} \norm{y - x}_2^2.
+    \]
+
+\end{frame}
+
+\begin{frame}{Lipschitz Gradients: \( L \)-Smoothness}
+    We say \( f \) is \good{\( L \)-smooth} if for every \( x, y \in \R^d \),
+    \[
+        f(y) \leq Q_x(y) := f(x) + \abr{\grad(x), y - x} + \frac{L}{2} \norm{y - x}_2^2.
+    \]
+
+    \pause
+    \horizontalrule
+
+    The function \( Q_x(y) \) is a \emph{majorant} of \( f \).
+    Minimizing \( Q_x(y) \) in \( y \) gives,
+    \begin{align*}
+        \nabla_y Q_x(\hat y)
+         & = \grad(x) + L (\hat y - x) = 0 \\
+        \pause
+        \implies
+        \hat y
+         & = x - \inv{L} \grad(x).
+    \end{align*}
+
+    \pause
+
+    \textbf{Gradient descent} is a \bad{majorization-minimization} algorithm!
+
+\end{frame}
+
+\begin{frame}{Lipschitz Gradients: Majorization-Minimization}
+    Using \( \wkk = \wk - \inv{L} \grad(x) \) in \( Q_{\wk} \)
+    gives guaranteed progress.
+    \[
+        \textbf{Descent Lemma}:
+        f(\wkk) \leq f(\wk) - \frac{1}{L} \norm{\grad(\wk)}_2^2.
+    \]
+
+    \pause
+    \vspace{3ex}
+
+    \begin{center}
+        \input{assets/step_size_bound}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Level Set Teleportation}
+
+    \textbf{Basic Idea}: \( L \)-smoothness relates
+    gradient magnitude to descent in function values,
+    \[
+        f(\wkk) \leq f(\wk) - \inv{L}\norm{\grad(\wk)}_2^2.
+    \]
+
+    \begin{itemize}
+        \item All other quantities \bad{held constant}, maximizing \(
+              \norm{\grad(\wk)}_2 \) maximizes \good{guaranteed progress}.
+    \end{itemize}
+
+    \pause
+    \horizontalrule
+    \vspace{2ex}
+
+    This lets us formalize our picture version of \textbf{level set
+        teleportation},
+    \[
+        \wk^+ \in \argmax_w \, \half \norm{\grad(w)}^2_2  \quad \text{s.t.} \quad f(w) \leq f(\wk).
+    \]
+
+\end{frame}
+
+\setbeamercolor{background canvas}{bg=LightCyan}
+\begin{frame}{}
+    \begin{center}
+        \huge Level Set Teleportation.
+    \end{center}
+\end{frame}
+\setbeamercolor{background canvas}{bg=white}
+
+\begin{frame}{Level Set Teleportation: Algorithm}
+
+    \begin{itemize}
+        \item Let \( \calB \subset \bbN \) be \good{start indices} for teleportation
+              blocks.
+              \pause
+
+        \item Each \good{teleportation block} \( i \in \calB \) consists of \( b_i \geq 1 \)
+              steps.
+              \pause
+
+        \item Complete \good{teleportation schedule} is \( \calT \).
+    \end{itemize}
+
+    \begin{algorithm}[H]
+        \caption{GD with Teleportation}
+        \label{alg:gd-with-teleport}
+        \begin{algorithmic}
+            \STATE \textbf{Inputs}: \( w_0 \); step-sizes \( \etak \); block indices \( \calB \), sizes \( b_k \).
+            \STATE \( \calT \gets \bigcup_{k \in \calB} \cbr{k, k+1, \ldots, k+b_k-1} \)
+            \FOR{\( k \in \cbr{0, \ldots, K} \)}
+            \IF{\( k \in \calT \)}
+            \STATE \( w_k^+ \in \argmax \cbr{\norm{\grad(w)}_2 : f(w) \leq f(\wk)} \)
+            \ELSE
+            \STATE \( w_k^+ \gets w_k \)
+            \ENDIF
+            \STATE \( \wkk \gets \wk^+ - \etak \grad(\wk^+) \)
+            \ENDFOR
+            \STATE \textbf{Output}: \( w_K \)
+        \end{algorithmic}
+    \end{algorithm}
+\end{frame}
+
+\begin{frame}{Level Set Teleportation: Test Functions}
+
+    \[
+        \wk^+ \in \argmax_w \, \half \norm{\grad(w)}^2_2  \quad \text{s.t.} \quad f(w) \leq f(\wk).
+    \]
+
+    \horizontalrule
+    \pause
+
+    \begin{figure}[]
+        \centering
+        \includegraphics[width=0.49\textwidth]{assets/Booth-2d.pdf}
+        \includegraphics[width=0.49\textwidth]{assets/Goldstein-Price-2d.pdf}
+    \end{figure}
+
+    \begin{center}
+        \Large Teleportation in action on two test functions.
+    \end{center}
+\end{frame}
+
+\begin{frame}{Level Set Teleportation: Newton's Method}
+
+    \[
+        \wk^+ \in \argmax_w \, \half \norm{\grad(w)}^2_2  \quad \text{s.t.} \quad f(w) \leq f(\wk).
+    \]
+
+    \pause
+    \horizontalrule
+
+    \begin{itemize}
+
+        \item If \( \grad(\wk) \neq 0 \), then the KKT conditions are
+              \good{necessary} for \( \wk^+ \) to be
+              a local maximum:
+              \[
+                  \nabla^2 f(\wk^+) \grad(\wk^+) - \lambda_k \grad(\wk^+) = 0.
+              \]
+              \pause
+              \vspace{-3ex}
+
+        \item \( \lambda_k \) is an eigenvalue of \( \nabla^2 f(\wk^+) \) and
+              if \( \lambda_k \neq 0 \), then
+              \[
+                  \grad(\wk^+) = \lambda_k \sbr{\nabla^2 f(\wk^+)}^{\dagger} \grad(\wk^+).
+              \]
+              \pause
+
+        \item The gradient direction is the Newton direction with scale \( \lambda_k \)!
+
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Level Set Teleportation: Strong Convexity}
+    \textbf{Strong Convexity}: \( f \) is \( \mu \)-SC if for all \( x,y \in \R^d \),
+    \[
+        f(y) \geq f(x) + \abr{\grad(x), y - x} + \frac{\mu}{2} \norm{y - x}_2^2.
+    \]
+    \pause
+    \vspace{-2ex}
+
+    Ensures \( \nabla^2 f(\wk) \) is P.D.\ and \( \lambda_k > 0 \).
+    \pause
+    \horizontalrule
+
+    \citet{zhao2023improving} use this to analyze GD with teleportation.
+    \pause
+    \vspace{1em}
+    \begin{itemize}
+        \item This approach leads to standard, \good{super-linear} rates using
+              Newton-type analyses.
+
+              \pause
+              \vspace{1em}
+        \item But it requires teleporting before \bad{every iteration} of GD
+              and \bad{strong convexity} is key.
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}{Level Set Teleportation: More Problems}
+
+    And there are some more \bad{problems}\ldots
+
+    \vspace{2ex}
+    \pause
+
+    \begin{enumerate}
+        \item Teleportation can \bad{blow-up} the distance to a minimizer,
+              \[
+                  \norm{\wk^+ - \wopt}_2 \geq \bad{C} \norm{\wk - \wopt}.
+              \]
+              \vspace{-2ex}
+              \pause
+              \begin{itemize}
+                  \item Breaks standard proof techniques for non-strongly convex \( f \).
+              \end{itemize}
+
+              \pause
+              \vspace{2ex}
+
+        \item If \( f \) is non-strongly convex, then \( \nabla^2 f(\wk) \) can
+              be positive \bad{semi}-definite and \bad{\( \lambda_k = 0 \)} may happen.
+              \vspace{1ex}
+              \pause
+              \begin{itemize}
+                  \item Breaks the connection to Newton's method.
+              \end{itemize}
+
+              \pause
+              \vspace{2ex}
+
+        \item No efficient algorithms for \bad{teleporting in practice}!
+    \end{enumerate}
+
+\end{frame}
+
+\setbeamercolor{background canvas}{bg=LightCyan}
+\begin{frame}{}
+    \begin{center}
+        \huge Analysis and Algorithms
+    \end{center}
+\end{frame}
+\setbeamercolor{background canvas}{bg=white}
+
+\begin{frame}{Convergence Analysis: Convex Functions}
+
+    \begin{center}
+        \large
+        \textbf{Goal}: fast rates for GD with \emph{intermittent} teleportation.
+    \end{center}
+
+    \horizontalrule
+    \pause
+
+    The key to faster rates is the \good{KKT} stationarity condition,
+    \[
+        \grad(\wk^+) = \lambda_k \sbr{\nabla^2 f(\wk^+)}^{\dagger} \grad(\wk^+).
+    \]
+
+    \pause
+    \vspace{2ex}
+
+    \begin{itemize}
+        \item But, we can't use this because \bad{$\lambda_k = 0$} may hold\ldots
+
+              \pause
+              \vspace{2ex}
+
+        \item \bad{Even worse}, \( \norm{\wk^+ - \wopt}_2^2 > \bad{C} \norm{\wk - \wopt}_2^2 \)
+              breaks the standard GD recursion:
+              \[
+                  \begin{aligned}
+                      \norm{\wkk - \wopt}_2^2
+                       & =
+                      \norm{\wk^+ - \wopt}_2^2 \\
+                       & \hspace{1em}
+                      - 2 \etak \abr{\grad(\wk^+), \wk^+ - \wopt}
+                      + \etak^2 \norm{\grad(\wk^+)}_2^2,
+                  \end{aligned}
+              \]
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}{Convergence Analysis: Convex Functions}
+
+    \good{Solution}: Teleportation is non-expansive in function values,
+    \[
+        f(\wkk) \leq f(\wk^+) \leq f(\wk).
+    \]
+    \pause%
+    As a result, all iterates remain in the initial sub-level set
+    \[
+        \calS_0 := \cbr{w : f(w) \leq f(w_0)}.
+    \]
+    \vspace{-2ex}
+    \pause
+
+    \begin{theorem}[Informal]
+        Let \( R = \sup \cbr{\norm{w - \wopt}_2 : w \in \calS_0 } \).
+        If \( f \) is \( L \)-smooth and convex,
+        then GD with \( \eta < 2 / L \) and
+        teleportation schedule \( \calT \) satisfies,
+        \[
+            f(w_K) - f(\wopt) \leq \frac{2 R^2}{K \eta \rbr{2 - L \eta}}.
+        \]
+        Moreover, there exists a function for which the convergence of GD
+        with and without teleportation are identical.
+    \end{theorem}
+\end{frame}
+
+\begin{frame}{Convergence: A Negative Tightness Result}
+    Denote \( \delta_K = f(\w_K) - f(\wopt) \).
+    Comparing to standard GD \citep{bubeck2015convex},
+    \[
+        \underbrace{
+            \delta_K \leq \frac{2 \bad{R^2}}{K \eta \rbr{2 - L \eta}}
+        }_{\text{With Teleportation}}
+        \quad \textbf{vs} \quad
+        \underbrace{
+            \delta_K \leq \frac{2 \good{\norm{w_0 - \wopt}_2^2}}
+            {K \eta \rbr{2 - L \eta}}.
+        }_{\text{Without Teleportation}}
+    \]
+
+    \pause
+    \vspace{2ex}
+
+    Unfortunately, the dependence on the diameter is \bad{tight}.
+    \vspace{1ex}
+    \begin{theorem}[Informal]
+        There exists an \( L \)-smooth and convex function
+        such that teleporting from the initialization guarantees,
+        \[
+            \norm{\w_0^+ - \wopt}_2 \geq R / 4.
+        \]
+    \end{theorem}
+\end{frame}
+
+\begin{frame}{Convergence: Hessian Stability}
+    We need the connection to \good{Newton's method} to prove fast rates.
+    \pause
+    \begin{itemize}
+        \item \( \nabla^2 f(w) \) needs to be positive definite and
+              well-behaved.
+    \end{itemize}
+
+    \pause
+    \horizontalrule
+
+    \begin{definition}[Hessian Stability]\label{def:hessian-stability}
+        We say \( f \) has \( (\tL, \tmu) \)-stable Hessian
+        over \( \calQ \subseteq \R^d \) if for every \( x, y \in \calQ \),\,
+        \( \nabla^2 f(x) (y - x) \neq 0 \) and,
+        \begin{align*}
+            f(y)
+             & \leq f(x) + \abr{\grad(x), y \!-\! x}
+            + \frac{\tL}{2} \norm{y \!-\! x}^2_{\bad{\nabla^2 f(x)}},%
+            \\
+            f(y)
+             & \geq f(x) + \abr{\grad(x), y \!-\! x}
+            + \frac{\tmu}{2} \norm{y \!-\! x}^2_{\bad{\nabla^2 f(x)}}.%
+        \end{align*}
+    \end{definition}
+
+    \pause
+    Holds for practical problems, including logistic regression \citep{bach2010self}.
+
+\end{frame}
+
+\begin{frame}{Convergence: Fast Rates under Hessian Stability}
+    Recall that \( \delta_k = f(\wk) - f(\wopt) \) is the optimality gap.
+    \vspace{2ex}
+
+    \pause
+
+    \begin{theorem}[Informal]
+        Suppose \( f \) is \( L \)-smooth, convex, and satisfies Hessian
+        stability on \( \calS_0 \).
+        Let \( M = K - \abs{\calT} \).
+        Then GD with line-search satisfies,
+        \begin{equation*}
+            \delta_K \leq
+            \frac{2 R^2 L}
+            {\bad{M} + 2 R^2 L \sum_{k \in \calB}
+                \good{\sbr{
+                        \rbr{\frac{\tL}{\tL - \tmu}}^{b_k} - 1} \inv{\delta_{k-1}}
+                }}.
+        \end{equation*}
+    \end{theorem}
+
+    \pause
+
+    \begin{center}
+        \Large
+        Convergence is faster than GD when \( \delta_{k} \) is small!
+    \end{center}
+
+\end{frame}
+
+\begin{frame}{Convergence: Simplified Rates}
+
+    \begin{itemize}
+        \item An alternative proof technique makes this rate explicit.
+              \pause
+        \item Consider teleporting every other iteration:
+              \( \calT = \cbr{1, 3, 5, \ldots} \).
+    \end{itemize}
+    \pause
+
+    \begin{theorem}
+        Suppose \( f \) is \( L \)-smooth, convex, and satisfies Hessian
+        stability on \( \calS_0 \).
+        Then GD with line-search satisfies,
+        \begin{equation*}
+            \delta_K
+            \leq
+            \frac{2 R^2 L (\tL - \tmu)}{\tmu \sbr{\rbr{\frac{\tL}{\tL - \tmu}}^{K/2} - 1}}
+            \approx
+            2 R^2 L \tilde C
+            \good{\rbr{1 - \frac{\tmu}{\tL}}^{K/2}}.
+        \end{equation*}
+    \end{theorem}
+    \pause
+
+    \begin{center}
+        \Large
+        This is a linear rate without strong convexity!
+    \end{center}
+
+\end{frame}
+
+\begin{frame}{Level Set Teleportation: Towards an Algorithm}
+
+    \[
+        \wk^+ \in \argmax_w \, \half \norm{\grad(w)}^2_2  \quad \text{s.t.} \quad f(w) \leq f(\wk).
+    \]
+
+    \horizontalrule
+    \pause
+
+    \textbf{Restrictions} on an efficient teleportation algorithm.
+
+    \vspace{1ex}
+
+    \begin{itemize}
+        \item The derivative of the gradient norm is a
+              \bad{Hessian-vector product}: \( \nabla^2 f(x) \grad(x) \).
+              \pause
+              \vspace{1ex}
+
+        \item We can't use generic second-order solvers, since computing the
+              Hessian requires
+              \bad{third-order derivatives}.
+
+              \pause
+              \vspace{1ex}
+        \item The algorithm must be \good{parameter-free} because
+              teleportation is only a sub-routine of GD.
+    \end{itemize}
+    \pause
+    \vspace{1ex}
+
+    These constraints suggest \good{first-order methods}.
+
+\end{frame}
+
+\begin{frame}{Level Set Teleportation: Practical Teleportation}
+
+    We can't project onto \( \calL_k := \cbr{w : f(w) = f(\wk)} \),
+    but we can project onto the \good{linearization} at \( \xk \):
+    \[
+        l_k = \cbr{ w : f(\xk) + \abr{\grad(\xk), w - \xk} = f(\wk) }
+    \]
+    \pause
+    \vspace{-4ex}
+
+    \begin{center}
+        %\hspace{-1.5em}
+        \input{assets/quadratic_teleport}
+    \end{center}
+
+\end{frame}
+
+\begin{frame}{Level Set Teleportation: Practical Teleportation}
+
+    \begin{algorithm}[H]
+        \caption{Sub-level Set Teleportation}
+        \label{alg:teleport}
+        \begin{algorithmic}
+            \STATE \( \x_0 \gets \wk \)
+            \STATE \( q_0 \gets \nabla^2 f(\x_0) \grad(\x_0) \)
+            \WHILE{\( \norm{\bfP_t q_t}_2 > \epsilon \) or \( f(\xk) - f(\wk) > \delta \)}
+            \STATE \( g_t \gets \norm{\grad(\xk)}_2^2 \)
+            \STATE \( v_{t} \gets - \rbr{\rho \abr{q_t, \grad(\xk) } + f(\xk) - f(\wk)}_+ \grad(\xk) \)
+            \STATE \( \xkk \gets \xk + (\rho \cdot q_t + v_t) / g_t \)
+            \WHILE{\( \phi_{\gamma_t}(\xkk) > \half g_t + (\abr{q_t, v_t} - \rho \norm{q_{t}}_2^2) / g_t \)}
+            \STATE \( \rho \gets \rho / 2 \)
+            \STATE \( v_{t} \gets -\! \rbr{\rho \abr{q_t, \!\grad(\xk) } \!+\! f(\xk) \!-\! f(\wk)}_+ \!\grad(\xk) \)
+            \STATE \( \xkk \gets \xk + (\rho \cdot q_t + v_t) / g_t \)
+            \ENDWHILE
+            \STATE \( q_{t+1} \gets \nabla^2 f(\xk) \grad(\xk) \)
+            \STATE \( t \gets t+1 \)
+            \ENDWHILE
+            \STATE \textbf{Output}: \( \xkk \)
+        \end{algorithmic}
+    \end{algorithm}
+\end{frame}
+
+\setbeamercolor{background canvas}{bg=LightCyan}
+\begin{frame}{}
+    \begin{center}
+        \huge Experiments
+    \end{center}
+\end{frame}
+\setbeamercolor{background canvas}{bg=white}
+
+\begin{frame}{Experiments: Evaluating the Algorithm}
+
+    Consider teleportation for a \bad{non-convex} neural network.
+    \begin{itemize}
+        \pause
+        \item We consider a two-layer MLP with \( 50 \) hidden units and soft-plus activations.
+              \pause
+        \item Dataset is \texttt{MNIST}.
+    \end{itemize}
+    \pause
+    \horizontalrule
+
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.99\textwidth]{assets/teleport_metrics.pdf}
+    \end{figure}
+
+\end{frame}
+
+\begin{frame}{Experiments: Performance Profile}
+
+    We generate 120 problems from the UCI repository \citep{asuncion2007uci}.
+    \begin{itemize}
+        \pause
+        \item Solid lines indicate methods \good{with teleportation}.
+              \pause
+        \item Dashed lines are the same methods \bad{without teleportation}.
+    \end{itemize}
+    \pause
+
+    \begin{figure}
+        \centering
+        \includegraphics[width=1.0\textwidth]{assets/network_profile.pdf}
+    \end{figure}
+
+    \pause
+
+    Teleportation \good{uniformly improves} speed and success rates!
+\end{frame}
+
+\begin{frame}{Experiments: Convex Newton}
+
+    Teleporting at every iteration behaves like \bad{Newton's method}.
+
+    \pause
+
+    \begin{figure}
+        \centering
+        \includegraphics[width=1.0\textwidth]{assets/newton_comparison_logreg.pdf}
+    \end{figure}
+
+\end{frame}
+
+\begin{frame}{Experiments: Convex Newton}
+
+    But teleportation still works for \good{non-convex problems}!
+
+    \pause
+
+    \begin{figure}
+        \centering
+        \includegraphics[width=1.0\textwidth]{assets/newton_comparison_network.pdf}
+    \end{figure}
+
+\end{frame}
+
+\setbeamercolor{background canvas}{bg=LightCyan}
+\begin{frame}{}
+    \begin{center}
+        \huge Questions?
+    \end{center}
+\end{frame}
+\setbeamercolor{background canvas}{bg=white}
+
+%% bibliography
+\begin{frame}[allowframebreaks]{References}
+    \printbibliography[]
+\end{frame}
+
+\end{document}

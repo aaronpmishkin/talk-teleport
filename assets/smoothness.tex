@@ -1,0 +1,58 @@
+%! TEX root = ../../main.tex
+
+%% Illustration of cone decomposition. 
+
+\begin{tikzpicture}[scale=1,
+		declare function={
+				abs_off(\x)= 2*abs(x + 3);
+				quad_off(\x)= 2*(x - 3)^2;
+			}
+	]
+	\begin{axis}[width=\linewidth, height=5cm,
+			axis lines=none, yticklabels={,,}, xticklabels={,,},
+			ymin=-2, ymax=6, ytick={0,...,5}, ylabel=$$, x axis line style={-},
+				xmin=-6, xmax=6, xtick={-5,...,5}, xlabel=$$, y axis line style={-},
+		]
+
+		\addplot[name path=abs, domain=-6:6, samples=200, line width=3pt, color=bad, visible on=<3->]{abs_off(x)};
+		\node[visible on=<3->] at (axis cs:-3,-1) {Non-Smooth};
+
+		\node[name=aw1, label={[visible on=<4->]right:$\wk$}, circle, fill, inner sep=2pt, visible on=<4->] at (axis cs:-0.5,5) {};
+		\node[name=aw2, label={[visible on=<5->]right:$w_{k+1}$}, circle, fill, inner sep=2pt, visible on=<5->] at (axis cs:-2.5,1) {};
+		\node[name=aw3, label={[visible on=<6->]left:$w_{k+2}$}, circle, fill, inner sep=2pt, visible on=<6->] at (axis cs:-4.5,3) {};
+
+		\draw [->, line width=2pt, bend right=60, color=blue, visible on=<5->] (aw1) to (aw2);
+		\draw [->, line width=2pt, bend right=40, color=blue, visible on=<6->] (aw2) to (aw3);
+		\draw [->, line width=2pt, bend right=90, color=green, visible on=<7->] (aw3) to (aw2);
+
+
+		\addplot[name path=quad, domain=-6:6, samples=200, line width=3pt, color=good, visible on=<8->]{quad_off(x)};
+		\node[visible on=<8->] at (axis cs:3,-1) {Smooth};
+
+		\node[name=qw1, label={[visible on=<9->]right:$\wk$}, circle, fill, inner sep=2pt, visible on=<9->] at (axis cs:4.5,4.5) {};
+		\node[name=qw2, label={[visible on=<10->]right:$\wkk$}, circle, fill, inner sep=2pt, visible on=<10->] at (axis cs:4,2) {};
+		\node[name=qw3, label={[visible on=<11->]right:$w_{k+2}$}, circle, fill, inner sep=2pt, visible on=<11->] at (axis cs:3.5,0.5) {};
+
+		\draw [->, line width=2pt, bend right=60, color=blue, visible on=<10->] (qw1) to (qw2);
+		\draw [->, line width=2pt, bend right=40, color=blue, visible on=<11->] (qw2) to (qw3);
+
+		%\draw [name path=cone_1, solid, line width=1pt] (axis cs:0,-2) -- (axis cs:0,6);
+		%\draw [name path=bounds, line width=0pt] (axis cs:6,-2) -- (axis cs:6,6);
+		%\tikzfillbetween[of=cone_1 and bounds, on layer=ft]{good, opacity=0.1};
+
+		%%% point labels
+		%% origin point
+		%\node[circle, fill, inner sep=1pt] at (axis cs:0,0) {};
+
+		%% active examples 
+		%\node[label=right:$(x_1\!\mathbin{,} y_1)$, circle, draw, line width=0.25mm, inner sep=0.5mm] at (axis cs:-5,1) {};
+		%\node[label=right:$(x_2\!\mathbin{,} y_2)$, circle, fill, inner sep=0.5mm] at (axis cs:0.5,5) {};
+
+
+		%% lines
+		%\draw [->, draw=bad, line width = 1mm] (axis cs:0,0) -- (axis cs:5,0) node[near end,above right] {$w^*_{1}$};
+
+		%\node[] at (axis cs:-4,5) { $ \lambda \approx 0$ };
+	\end{axis}
+
+\end{tikzpicture}%

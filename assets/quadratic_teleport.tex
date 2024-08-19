@@ -1,0 +1,125 @@
+\begin{tikzpicture}[scale=1,
+	]
+	\begin{axis}[width=1.1\linewidth, 
+        height=0.6\linewidth,
+        axis lines=none,  % don't print axis lines
+        yticklabels={,,}, xticklabels={,,},
+		ymin=-2, ymax=2, 
+		xmin=-4, xmax=4,
+		view={0}-{90},
+		]
+
+		\addplot3[
+			domain=-4:4,
+			domain y=-4:4,
+			contour gnuplot={
+                labels=false, 
+                levels={1, 4, 10},
+                draw color=black,
+            },
+            line width=2pt,
+            samples=100,
+		] {x^2 + 4*y^2 };
+
+        \addplot[
+            domain=-4:4,
+            samples=10,
+            line width=2pt,
+            draw=red,
+            ] {-x/2 + 2/sqrt(2)};
+
+        \addplot[
+            ->,
+            domain=1.414:1.545,
+            samples=10,
+            line width=2pt,
+            draw=blue,
+            ] {8*x - 15/sqrt(2)};
+
+        \addplot[
+            domain=-4:4,
+            samples=10,
+            line width=2pt,
+            draw=purple,
+            ] {1.0227 + (4 - 2*0.783*(x-0.783) - 0.783^2 - 4*1.0227^2)/(8*1.0227)};
+
+       \node[
+           star,
+           fill=black,
+           inner sep=0pt,
+           minimum size=6pt,
+           label={[label distance=-1.0mm]90:{$\wopt$}}
+           ] (opt) at (axis cs:0,0) {};
+
+       \node[
+           label={[label distance=2.2mm]90:{$F(\w)$}}
+           ] at (axis cs:1,-0.5) {};
+
+       \node[
+           circle,
+           fill=black,
+           inner sep=0pt,
+           minimum size=6pt,
+           label={[label distance=-1mm]90:{$x_0$}}
+           ] (a) at (axis cs:1.414,0.707) {};
+
+       \node[
+           circle,
+           fill=black,
+           inner sep=0pt,
+           minimum size=6pt,
+           label={[label distance=0mm]180:{$x_0^+$}}
+           ] (b) at (axis cs:1.55,1.79) {};
+
+       \node[
+           circle,
+           fill=black,
+           inner sep=0pt,
+           minimum size=6pt,
+           label={[label distance=0mm]90:{$x_1$}}
+           ] (c) at (axis cs:0.783,1.0227) {};
+
+       \draw[
+           ->, 
+           draw=orange,
+           line width=2pt,
+           ] (b) -- (c);
+
+       \node[
+           label={[label distance=-1mm, text=red]90:{$l_0$}}
+           ] at (axis cs:2.5,0.164) {};
+
+       \node[
+           label={[label distance=-1.0mm, text=purple]90:{$l_1$}}
+           ] at (axis cs:-1.4,1.4) {};
+
+       \draw[
+           draw=none,
+           ] (a) -- (b)
+           node[pos=0.84, right, text=blue]{$\nabla^2 F(x_0) \nabla F(x_0)$};
+
+       \draw[
+           draw=none,
+           ] (b) -- (c)
+           node[pos=0.50, left, text=orange]{$v_{0}$};
+
+       %\draw[
+       %    ->, 
+       %    draw=BurntOrange,
+       %    line width=2pt,
+       %    ] (axis cs:0,1) -- (axis cs:0, 0.04) node [text=BurntOrange, left, pos=0.35, distance=-2mm] {$\nabla F(x^*)$};
+
+       %\node[
+       %    star,
+       %    fill=orange,
+       %    inner sep=0pt,
+       %    minimum size=10pt,
+       %    label={[label distance=-3mm, text=orange]70:{$x^*$}}
+       %    ] (c) at (axis cs:0,1) {};
+
+
+		%\draw [decorate, line width = 0.6mm,
+		%    decoration = {calligraphic brace}] (axis cs:2.1,0.707) --  (axis cs:2.25,1.79)
+            %node[midway,right]{$v_\varepsilon(a)$};
+	\end{axis}
+\end{tikzpicture}%
