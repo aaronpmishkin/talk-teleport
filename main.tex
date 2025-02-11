@@ -55,9 +55,11 @@
 
 \addbibresource[]{refs.bib}
 
-\title{Level Set Teleportation: an Optimization Perspective}
+\title{Level Set Teleportation: An Optimization Perspective}
+\subtitle{\vspace{1ex} AISTATS 2025}
 \author{Aaron Mishkin \and Alberto Bietti \and Robert M. Gower}
 \collaborators{
+    \vspace{-1ex}
 	\includegraphics[width=0.18\linewidth]{assets/flatiron_small.jpeg}
 	\includegraphics[width=0.18\linewidth]{assets/alberto.jpg}
 	\includegraphics[width=0.18\linewidth]{assets/rob.jpg}
@@ -94,24 +96,25 @@
 \maketitle
 %% main content starts %%
 
-\begin{frame}{Introduction: Plateau's and Sudden Drops}
+\begin{frame}{Introduction: Plateaus and Sudden Drops}
 
-    \textbf{Basic Problem}: deep-learning objectives have many \bad{flat regions}
+    \textbf{Basic Problem}: deep-learning objectives have many \bad{saddle points}
     where the gradient is small and optimization is slow \citep{fukumizu2000local}.
 
     \pause
 
     \begin{figure}[]
         \centering
-        \includegraphics[width=0.98\textwidth]{assets/plateau.png}
+        \includegraphics[width=0.90\textwidth]{assets/SaddleToSaddleSimu.pdf}
     \end{figure}
 
     \pause
 
-    Flat regions can cause \bad{plateaus} in training loss and then \good{sudden
-        drops} when iterates finally escape.
+    Saddle-to-saddle dynamics \citep{pesme2023saddle, abbe2023saddle} cause
+    \bad{plateaus} in training loss and then
+    \good{sudden drops} when the iterates escape.
 
-    \source{https://arxiv.org/abs/1512.03385}
+    \source{https://arxiv.org/abs/2302.11055}
 
 \end{frame}
 
@@ -255,9 +258,10 @@
                   f(y) \geq f(x) + \abr{\grad(x), y - x}.
               \]
               \pause
+              \vspace{-1ex}
 
-        \item \( f \) is \good{differentiable} and \( \nabla f \) is
-              \good{\( L \)-Lipschitz}: \( \forall x, y \in \R^d \),
+        \item \( f \) is \good{differentiable} and
+              \good{\( L \)-Smooth}: \( \forall x, y \in \R^d \),
               \[
                   \norm{\grad(y) - \grad(x)}_2 \leq L \norm{y - x}_2,
               \]
@@ -270,10 +274,10 @@
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Lipschitz Gradients: Motivation}
+\begin{frame}{Smoothness: Motivation}
     \begin{center}
         \Large
-        Why do we need \( \grad \) to be \( L \)-Lipschitz?
+        Why do we need \( \grad \) to be \( L \)-Smooth?
     \end{center}
 
     \pause
@@ -293,74 +297,15 @@
 
 \end{frame}
 
-\begin{frame}{Lipschitz Gradients: Upper Bounds}
-    If \( \grad \) is L-Lipschitz, then
-    \begin{align*}
-               & \abs{f(y) - f(x) - \abr{\grad(x), y - x}}                                            \\
-        \pause & \hspace{2em} = \abs{\int_0^1 \abr{\grad(x + t(y - x)) - \grad(x), y - x} dt}         \\
-        \pause & \hspace{2em} \leq \int_0^1 \norm{\grad(x + t(y - x)) - \grad(x)}_2 \norm{y - x}_2 dt \\
-        \pause & \hspace{2em} \leq \int_0^1 L t \norm{y - x}_2 \norm{y - x}_2 dt                      \\
-        \pause & \hspace{2em} \leq \frac{L}{2} \norm{y - x}^2_2.
-    \end{align*}
-
-    \pause
-
-    The objective is upper-bounded by a \good{quadratic function}!
-    \[
-        f(y) \leq f(x) + \abr{\grad(x), y - x} + \frac{L}{2} \norm{y - x}_2^2.
-    \]
-
-\end{frame}
-
-\begin{frame}{Lipschitz Gradients: \( L \)-Smoothness}
-    We say \( f \) is \good{\( L \)-smooth} if for every \( x, y \in \R^d \),
-    \[
-        f(y) \leq Q_x(y) := f(x) + \abr{\grad(x), y - x} + \frac{L}{2} \norm{y - x}_2^2.
-    \]
-
-    \pause
-    \horizontalrule
-
-    The function \( Q_x(y) \) is a \emph{majorant} of \( f \).
-    Minimizing \( Q_x(y) \) in \( y \) gives,
-    \begin{align*}
-        \nabla_y Q_x(\hat y)
-         & = \grad(x) + L (\hat y - x) = 0 \\
-        \pause
-        \implies
-        \hat y
-         & = x - \inv{L} \grad(x).
-    \end{align*}
-
-    \pause
-
-    \textbf{Gradient descent} is a \bad{majorization-minimization} algorithm!
-
-\end{frame}
-
-\begin{frame}{Lipschitz Gradients: Majorization-Minimization}
-    Using \( \wkk = \wk - \inv{L} \grad(x) \) in \( Q_{\wk} \)
-    gives guaranteed progress.
-    \[
-        \textbf{Descent Lemma}:
-        f(\wkk) \leq f(\wk) - \frac{1}{L} \norm{\grad(\wk)}_2^2.
-    \]
-
-    \pause
-    \vspace{3ex}
-
-    \begin{center}
-        \input{assets/step_size_bound}
-    \end{center}
-\end{frame}
-
-\begin{frame}{Level Set Teleportation}
+\begin{frame}{Back to Level Set Teleportation}
 
     \textbf{Basic Idea}: \( L \)-smoothness relates
-    gradient magnitude to descent in function values,
+    gradient magnitude to progress in function values via the
+    \emph{descent lemma},
     \[
         f(\wkk) \leq f(\wk) - \inv{L}\norm{\grad(\wk)}_2^2.
     \]
+    \pause
 
     \begin{itemize}
         \item All other quantities \bad{held constant}, maximizing \(
@@ -371,10 +316,10 @@
     \horizontalrule
     \vspace{2ex}
 
-    This lets us formalize our picture version of \textbf{level set
-        teleportation},
+    Now we can give a formal version of ``jumping to big gradients'':
+    \pause
     \[
-        \wk^+ \in \argmax_w \, \half \norm{\grad(w)}^2_2  \quad \text{s.t.} \quad f(w) \leq f(\wk).
+        \textbf{Teleport: } \wk^+ \in \argmax_w \, \half \norm{\grad(w)}^2_2  \quad \text{s.t.} \quad f(w) \leq f(\wk).
     \]
 
 \end{frame}
@@ -382,7 +327,7 @@
 \setbeamercolor{background canvas}{bg=LightCyan}
 \begin{frame}{}
     \begin{center}
-        \huge Level Set Teleportation.
+        \huge Level Set Teleportation
     \end{center}
 \end{frame}
 \setbeamercolor{background canvas}{bg=white}
@@ -400,6 +345,7 @@
 
         \item Complete \good{teleportation schedule} is \( \calT \).
     \end{itemize}
+    \pause
 
     \begin{algorithm}[H]
         \caption{GD with Teleportation}
@@ -440,6 +386,36 @@
     \end{center}
 \end{frame}
 
+\begin{frame}{Level Set Teleportation: Faster Descent}
+    \textbf{GD with teleportation}:
+    \[
+        \begin{aligned}
+            \wk^+ & \in \argmax_w \, \half \norm{\grad(w)}^2_2  \quad \text{s.t.} \quad f(w) \leq f(\wk) \\
+            \wkk  & = \wk - \etak \grad(\wk^+).
+        \end{aligned}
+    \]
+
+    \pause
+    \horizontalrule
+
+    We can derive a \good{tighter descent lemma} for steps with teleportation!
+    \pause
+    \vspace{-1ex}
+
+    \begin{align*}
+        f(\wkk)
+         & \leq f(\wk^+) - \etak (1 - \frac{\etak L}{2}) \norm{\grad(\wk^+)}_2^2                          \\
+         & \leq f(\wk) - \etak (1 - \frac{\etak L}{2}) \max \cbr{\norm{\grad(w)}_2^2 : f(w) \leq f(\wk)}.
+    \end{align*}
+    \pause
+    \vspace{-1ex}
+
+    This approach leads to standard \( O(1/T) \) convergence, but on
+    the \good{maximum} gradient \( \max \cbr{\norm{\grad(w)}_2^2 : f(w) \leq f(\wk)} \)
+    \citep{zhao2023symmetry}.
+
+\end{frame}
+
 \begin{frame}{Level Set Teleportation: Newton's Method}
 
     \[
@@ -467,7 +443,7 @@
               \]
               \pause
 
-        \item The gradient direction is the Newton direction with scale \( \lambda_k \)!
+        \item The gradient direction is the \emph{Newton direction} with scale \( \lambda_k \)!
 
     \end{itemize}
 \end{frame}
@@ -563,13 +539,13 @@
     \vspace{2ex}
 
     \begin{itemize}
-        \item But, we can't use this because \bad{$\lambda_k = 0$} may hold\ldots
+        \item But we can't use this because \bad{$\lambda_k > 0$} may not hold\ldots
 
               \pause
               \vspace{2ex}
 
-        \item \bad{Even worse}, \( \norm{\wk^+ - \wopt}_2^2 > \bad{C} \norm{\wk - \wopt}_2^2 \)
-              breaks the standard GD recursion:
+        \item \bad{Worse}, \( \norm{\wk^+ - \wopt}_2^2 > \bad{C} \norm{\wk - \wopt}_2^2 \)
+              breaks standard proofs:
               \[
                   \begin{aligned}
                       \norm{\wkk - \wopt}_2^2
@@ -609,6 +585,9 @@
         Moreover, there exists a function for which the convergence of GD
         with and without teleportation are identical.
     \end{theorem}
+
+    \pause
+    This is similar to the strategy used by \citet{beck2013bcd}.
 \end{frame}
 
 \begin{frame}{Convergence: A Negative Tightness Result}
@@ -650,7 +629,8 @@
     \pause
     \horizontalrule
 
-    \begin{definition}[Hessian Stability]\label{def:hessian-stability}
+    \begin{definition}[Hessian Stability \citep{gower2019subspace, karimireddy2018global}]%
+        \label{def:hessian-stability}
         We say \( f \) has \( (\tL, \tmu) \)-stable Hessian
         over \( \calQ \subseteq \R^d \) if for every \( x, y \in \calQ \),\,
         \( \nabla^2 f(x) (y - x) \neq 0 \) and,
@@ -667,6 +647,42 @@
 
     \pause
     Holds for practical problems, including logistic regression \citep{bach2010self}.
+
+\end{frame}
+
+\begin{frame}{Convergence: Main Theoretical Challenge}
+    Intermittent teleportation gives \emph{two progress conditions}:
+
+    \pause
+    \vspace{1ex}
+
+    \begin{itemize}
+        \item \textbf{Steps with teleportation}
+              obtain a \good{linear rate} under Hessian stability via the
+              connection to Newton's method,
+              \[
+                  f(\wkk) - f(\wopt) \leq (1 - \frac{\tmu}{\tL}) (f(\wk) - f(\wopt).
+              \]
+
+              \pause
+
+        \item \textbf{Steps without teleportation} obtain a standard
+              descent lemma leading to a \bad{sub-linear rate},
+              \[
+                  f(\wkk) - f(\wopt) \leq f(\wk) - f(\wopt)
+                  - \frac{1}{2L} \norm{\grad(\wk)}_2^2.
+              \]
+    \end{itemize}
+    \pause
+
+    \horizontalrule
+
+    Combining the two leads to tighter rates for teleportation!
+    \pause
+
+    \[
+        f(w_{k + b_k}) - f(\wopt) \leq (1 - \frac{\tmu}{\tL})^{b_k} \sbr{f(w_{k-1}) - f(\wopt) - \frac{1}{2L} \norm{\grad{w_{k-1}}}_2^2}.
+    \]
 
 \end{frame}
 
@@ -831,7 +847,7 @@
 
     \begin{figure}
         \centering
-        \includegraphics[width=0.99\textwidth]{assets/teleport_metrics.pdf}
+        \includegraphics[width=0.99\textwidth]{assets/teleport_metrics_combined.pdf}
     \end{figure}
 
 \end{frame}
